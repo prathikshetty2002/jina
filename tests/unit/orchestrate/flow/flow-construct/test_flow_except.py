@@ -291,6 +291,25 @@ def test_flow_does_not_import_exec_dependencies():
             pass
 
 
+@pytest.mark.timeout(50)
+def test_flow_timeout_send():
+    f = Flow().add(uses=TimeoutSlowExecutor)
+
+    with f:
+        f.index([Document()])
+
+    f = Flow(timeout_send=3000).add(uses=TimeoutSlowExecutor)
+
+    with f:
+        f.index([Document()])
+
+    f = Flow(timeout_send=100).add(uses=TimeoutSlowExecutor)
+
+    with f:
+        with pytest.raises(Exception):
+            f.index([Document()])
+
+
 def test_flow_head_runtime_failure(monkeypatch):
     from jina.serve.runtimes.request_handlers.data_request_handler import (
         DataRequestHandler,
@@ -313,22 +332,3 @@ class TimeoutSlowExecutor(Executor):
     @requests(on='/index')
     def foo(self, *args, **kwargs):
         time.sleep(1.5)
-
-
-@pytest.mark.timeout(50)
-def test_flow_timeout_send():
-    f = Flow().add(uses=TimeoutSlowExecutor)
-
-    with f:
-        f.index([Document()])
-
-    f = Flow(timeout_send=3000).add(uses=TimeoutSlowExecutor)
-
-    with f:
-        f.index([Document()])
-
-    f = Flow(timeout_send=100).add(uses=TimeoutSlowExecutor)
-
-    with f:
-        with pytest.raises(Exception):
-            f.index([Document()])
